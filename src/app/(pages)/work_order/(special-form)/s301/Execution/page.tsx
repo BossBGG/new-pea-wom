@@ -10,18 +10,18 @@ import ElectricalList from "@/app/(pages)/work_order/(special-form)/s301/electri
 import { useAppSelector } from "@/app/redux/hook";
 import WorkOrderStepMobile from "@/app/(pages)/work_order/(special-form)/component/WorkOrderStepMobile";
 import WorkerList from "@/app/(pages)/work_order/(special-form)/component/worker/WorkerList";
-import MaterialEquipmentChecklistPage from "../component/material_equipment_checklist/material_equipment_checklist";
-import WorkExecution from "../component/work_execution/work_execution";
-import AddImages from "../component/work_execution/add_images";
-import AddFile from "../component/work_execution/add_file";
-import Comment from "../component/work_execution/comment";
-import SatisfactionAssessment from "../component/work_execution/satisfaction_assessment";
-import RecordKeeper from "../component/work_execution/record_keeper";
+import MaterialEquipmentChecklistPage from "../../component/material_equipment_checklist/material_equipment_checklist";
+import WorkExecution from "../../component/work_execution/work_execution";
+import AddImages from "../../component/work_execution/add_images";
+import AddFile from "../../component/work_execution/add_file";
+import Comment from "../../component/work_execution/comment";
+import SatisfactionAssessment from "../../component/work_execution/satisfaction_assessment";
+import RecordKeeper from "../../component/work_execution/record_keeper";
 import { useRouter } from "next/navigation";
-import RatingAndComment from "../component/work_execution/RatingAndComment ";
-import SignatureSection from "../component/work_execution/signature_section";
-import CardCollapse from "../component/CardCollapse";
-import WorkOrderActionButtons from "../component/WorkOrderActionBunttons";
+import RatingAndComment from "../../component/work_execution/RatingAndComment ";
+import SignatureSection from "../../component/work_execution/signature_section";
+import CardCollapse from "../../component/CardCollapse";
+import WorkOrderActionButtons from "../../component/WorkOrderActionBunttons";
 import {stepsExecution} from "@/app/config/work_order_steps";
 
 const ElectricalRepairOrderS301 = () => {

@@ -67,20 +67,8 @@ const WorkOrderActionButtons: React.FC<WorkOrderActionButtonsProps> = ({
 
   const handleConfirmCreateConfirm = () => {
     setShowConfirmCreatePopup(false);
-    setShowStartWorkPopup(true);
-  };
-
-  const handleStartWorkConfirm = () => {
-    setShowStartWorkPopup(false);
-    setShowEndWorkPopup(true);
-  };
-
-  const handleBeginWorkConfirm = () => {
-    setShowEndWorkPopup(false);
-    // Navigate to WorkOrderDetailsWaiting
-    router.push(
-      "/work_order/component/workorder-details/WorkOrderDetailsWaiting"
-    );
+    // Call the onConfirm prop to let parent handle navigation
+    onConfirm();
   };
 
   // Close all popups
@@ -99,14 +87,6 @@ const WorkOrderActionButtons: React.FC<WorkOrderActionButtonsProps> = ({
           <div className="flex flex-col space-y-3 mt-6">
             {/* First Row - Back and Next */}
             <div className="flex space-x-3">
-              {/* <Button
-                className={`${commonButtonClass} pea-button-outline flex-1`}
-                variant="outline"
-                onClick={onGoBack}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                {backText}
-              </Button> */}
               <div className="flex space-x-3">
                 <Button
                   className={`${commonButtonClass} cancel-button  flex-1`}
@@ -144,14 +124,6 @@ const WorkOrderActionButtons: React.FC<WorkOrderActionButtonsProps> = ({
         <div className="flex justify-between items-center mt-6">
           {/* Left side - Back button */}
           <div className="flex items-center space-x-3">
-            {/* <Button
-              className={`${commonButtonClass} pea-button-outline`}
-              variant="outline"
-              onClick={onGoBack}
-            >
-              <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-              {backText}
-            </Button> */}
             <Button
               className={`${commonButtonClass} cancel-button`}
               variant="outline"
@@ -189,14 +161,6 @@ const WorkOrderActionButtons: React.FC<WorkOrderActionButtonsProps> = ({
           <div className="flex flex-col space-y-3 mt-6">
             {/* First Row - Back and Confirm Create */}
             <div className="flex space-x-3">
-              {/* <Button
-                className={`${commonButtonClass} pea-button-outline flex-1`}
-                variant="outline"
-                onClick={onGoBack}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                {backText}
-              </Button> */}
               <div className="flex space-x-3">
                 <Button
                   className={`${commonButtonClass} cancel-button flex-1`}
@@ -234,15 +198,6 @@ const WorkOrderActionButtons: React.FC<WorkOrderActionButtonsProps> = ({
         <div className="flex justify-between items-center mt-6">
           {/* Left side - Back button */}
           <div className="flex items-center space-x-3">
-            {/* <Button
-              className={`${commonButtonClass} pea-button-outline`}
-              variant="outline"
-              onClick={onGoBack}
-            >
-              <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-              {backText}
-            </Button> */}
-
             <Button
               className={`${commonButtonClass} cancel-button`}
               variant="outline"
@@ -333,12 +288,8 @@ const WorkOrderActionButtons: React.FC<WorkOrderActionButtonsProps> = ({
         onClose={closeAllPopups}
         onConfirm={handleConfirmCreateConfirm}
       />
-
     </>
   );
 };
 
 export default WorkOrderActionButtons;
-
-
-

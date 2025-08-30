@@ -74,8 +74,9 @@ const ElectricalRepairOrderS301 = () => {
   };
 
   const handleConfirm = () => {
-    // Logic สำหรับยืนยันสร้างใบสั่งงาน
+    // Logic สำหรับยืนยันสร้างใบสั่งงาน - Navigate to waiting page
     console.log("Confirm create work order");
+    router.push("/work_order/s301/workOrderDetailsWaiting");
   };
 
   const handleComplete = () => {

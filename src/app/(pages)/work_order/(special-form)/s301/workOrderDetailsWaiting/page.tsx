@@ -14,6 +14,7 @@ import WorkOrderDetailsMaterialEquipment from "../../component/workorder-details
 import { StartWorkPopup } from "@/components/ui/popup";
 import CardCollapse from "../../component/CardCollapse";
 import ElectricalList from "../electrical-list";
+import MaterialEquipmentChecklistPage from "../../component/material_equipment_checklist/material_equipment_checklist";
 
 const WorkOrderDetailsWaiting = () => {
   const { setBreadcrumb } = useBreadcrumb();
@@ -230,8 +231,7 @@ const WorkOrderDetailsWaiting = () => {
             />
         </CardCollapse>
 
-        {/* Material Equipment */}
-        <WorkOrderDetailsMaterialEquipment />
+        <MaterialEquipmentChecklistPage />
       </div>
 
       {/* Action Buttons */}

@@ -10,9 +10,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHistory, faPrint, faEdit, faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
 import WorkOrderDetail from "../../component/workorder-details/WorkOrderDetail";
 import CustomerAndWorkerInfo from "../../component/workorder-details/CustomerAndWorkerInfo";
-import WorkOrderDetailsMaterialEquipment from "../../component/workorder-details/WorkOrderDetailsMaterialEquipment";
+
 import CardCollapse from "../../component/CardCollapse";
 import ElectricalList from "../electrical-list";
+import MaterialEquipmentChecklistPage from "../../component/material_equipment_checklist/material_equipment_checklist";
 
 const WorkOrderDetailsStartWorking = () => {
   const { setBreadcrumb } = useBreadcrumb();
@@ -221,8 +222,7 @@ const WorkOrderDetailsStartWorking = () => {
             />
         </CardCollapse>
 
-        {/* Material Equipment */}
-        <WorkOrderDetailsMaterialEquipment />
+        <MaterialEquipmentChecklistPage />
       </div>
 
       {/* Action Buttons */}

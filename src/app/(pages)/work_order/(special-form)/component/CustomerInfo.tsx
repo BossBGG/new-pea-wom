@@ -1,0 +1,102 @@
+import {useCallback, useEffect, useState} from "react";
+import InputText from "@/app/components/form/InputText";
+import {WorkOrderObj} from "@/types";
+import CardCollapse from "@/app/(pages)/work_order/(special-form)/component/CardCollapse";
+import debounce from "lodash/debounce";
+
+interface CustomerInfoProps {
+  data: WorkOrderObj;
+  updateData: (value: WorkOrderObj) => void
+}
+
+const CustomerInfo = ({
+                        data,
+                        updateData
+                      }: CustomerInfoProps) => {
+  const [workOrder, setWorkOrder] = useState<WorkOrderObj>(data);
+
+  useEffect(() => {
+    setWorkOrder(data);
+    console.log('workOrder', workOrder);
+  }, [data]);
+
+  const debounceSetData = useCallback(
+    debounce((d) => {
+      updateData(d);
+    }, 1000), []
+  )
+
+  const handleChange = (key: string, value: string) => {
+    let newData = {...data, [key]: value};
+    setWorkOrder(newData);
+    debounceSetData(newData)
+  }
+
+  return (
+    <CardCollapse title={'ข้อมูลลูกค้า'}>
+      <div className="flex flex-wrap px-0 py-2 ">
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="ชื่อลูกค้า"
+                     label="ชื่อลูกค้า"
+                     value={workOrder.customerName}
+                     onChange={(v) => handleChange('customerName', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="โทรศัพท์มือถือ"
+                     label="โทรศัพท์มือถือ"
+                     value={workOrder.customerMobileNo}
+                     numberOnly={true}
+                     maxLength={10}
+                     onChange={(v) => handleChange('customerMobileNo', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="ที่อยู่ขอรับบริการ"
+                     label="ที่อยู่ขอรับบริการ"
+                     value={workOrder.customerAddress}
+                     onChange={(v) => handleChange('customerAddress', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="อีเมล"
+                     label="อีเมล"
+                     value={workOrder.customerEmail}
+                     type="email"
+                     onChange={(v) => handleChange('customerEmail', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="BP"
+                     label="BP"
+                     value={workOrder.customerBp}
+                     onChange={(v) => handleChange('customerBp', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="CA"
+                     label="CA"
+                     value={workOrder.customerCa}
+                     onChange={(v) => handleChange('customerCa', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="Latitude"
+                     label="Latitude"
+                     value={workOrder.customerLatitude}
+                     onChange={(v) => handleChange('customerLatitude', v)}
+          />
+        </div>
+        <div className="w-full md:w-1/2 p-2">
+          <InputText placeholder="Longitude"
+                     label="Longitude"
+                     value={workOrder.customerLongitude}
+                     onChange={(v) => handleChange('customerLongitude', v)}
+          />
+        </div>
+      </div>
+    </CardCollapse>
+  )
+}
+
+export default CustomerInfo;

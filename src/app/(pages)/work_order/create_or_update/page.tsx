@@ -390,15 +390,12 @@ const CreateOrUpdateWorkOrder = () => {
     item.appointmentDate = format(item.appointmentDate, "yyyy-MM-dd HH:mm:ss")
 
     if (data.materialEquipments && data.materialEquipments.length > 0) {
-      item.materialEquipments = data.materialEquipments.map((material) => ({
-        materialSetUuid: material.materialSetUuid,
-        materialId: material.id,
+      item.equipments  = data.materialEquipments.map((material) => ({
         code: material.code,
         name: material.name,
         quantity: Number(material.quantity),
         unit: material.unit,
         price: Number(material.price) || 0,
-        isActive: material.isActive,
       }));
     }
 

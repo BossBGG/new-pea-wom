@@ -4,12 +4,13 @@ import React, { useEffect, useState } from "react";
 import { DataTableEditor } from "@/app/components/editor-table/DataTableEditor";
 import { columns } from "@/app/(pages)/work_order/(special-form)/s318/columns";
 import { useAppSelector } from "@/app/redux/hook";
-import { MaterialEquipmentObj, MeterEquipment } from "@/types";
+import { MeterEquipment, Options, RequestServiceDetail, WorkOrderObj } from "@/types";
 import { ListDataEditor } from "@/app/components/editor-table/ListDataEditor";
 import ListDataContent from "@/app/(pages)/work_order/(special-form)/s318/list-data-content";
 import { Button } from "@/components/ui/button";
 import ModalEquipments from "@/app/(pages)/work_order/(special-form)/s318/modal-equipments";
 import CardCollapse from "@/app/(pages)/work_order/(special-form)/component/CardCollapse";
+import { getMeterEquipmentOptions } from "@/app/api/MaterialEquipmentApi";
 
 interface MeterEquipmentListOptions {
   showCardCollapse?: boolean;
@@ -18,16 +19,23 @@ interface MeterEquipmentListOptions {
   showActionColumn?: boolean;
   isReadOnly?: boolean;
 }
+
 interface MeterEquipmentListProps {
-  data: MeterEquipment[];
-  updateData?: (data: MeterEquipment[]) => void;
+  data: WorkOrderObj;
+  updateData?: (data: WorkOrderObj) => void;
   options?: MeterEquipmentListOptions;
+  meterEquipmentOptions: Options[];
+  onUpdateOptions?: (options: Options[]) => void;
+  requestCode: string;
 }
 
 const MeterEquipmentList = ({
   data,
   updateData,
   options = {},
+  meterEquipmentOptions,
+  onUpdateOptions,
+  requestCode
 }: MeterEquipmentListProps) => {
   const {
     showCardCollapse = true,
@@ -37,28 +45,43 @@ const MeterEquipmentList = ({
     isReadOnly = false,
   } = options;
 
-  const itemMeterEquipment = {
-    id: 0,
-    equipment_name: "",
+  const itemMeterEquipment: MeterEquipment = {
+    id: Date.now(), 
+    equipment_id: "",
+    equipment_name: "", 
     size: "",
-    quantity: 0,
+    quantity: 1, 
     price: 0,
     isUpdate: true,
     isEdited: false,
-  } as MeterEquipment;
+  };
 
-  const [meterEquipments, setMeterEquipments] =
-    useState<MeterEquipment[]>(data || []);
+  const [meterEquipments, setMeterEquipments] = useState<MeterEquipment[]>([]);
   const screenSize = useAppSelector((state) => state.screen_size);
 
   const [openModal, setOpenModal] = React.useState(false);
   const [updateIndex, setUpdateIndex] = React.useState(-1);
 
-  const equipmentNameOptions = [
-    { label: "มิเตอร์", value: "มิเตอร์" },
-    { label: "อุปกรณ์ครอบสายไฟฟ้า", value: "อุปกรณ์ครอบสายไฟฟ้า" },
-    { label: "หม้อแปลงไฟฟ้า", value: "หม้อแปลงไฟฟ้า" },
-  ];
+  useEffect(() => {
+    let requestService = data.requestServiceDetail as RequestServiceDetail;
+    if (typeof data.requestServiceDetail === "string") {
+      requestService = JSON.parse(data.requestServiceDetail);
+    }
+   
+    const items = requestService?.items || [];
+    const convertedItems: MeterEquipment[] = items.map((item: any, index: number) => ({
+      id: item.item_id || `temp_${index}`, 
+      equipment_id: item.item_id || "",
+      equipment_name: meterEquipmentOptions.find(opt => opt.value === item.item_id)?.label || "",
+      size: item.item_size?.toString() || "",
+      quantity: item.quantity || 0,
+      price: item.price || 0,
+      isUpdate: false,
+      isEdited: false,
+    }));
+    
+    setMeterEquipments(convertedItems);
+  }, [data.requestServiceDetail, meterEquipmentOptions]);
 
   useEffect(() => {
     if (screenSize !== "desktop") {
@@ -67,42 +90,35 @@ const MeterEquipmentList = ({
           return { ...item, isUpdate: false };
         }
       );
-
-      console.log("newMeterEquipments >>> ", newMeterEquipments);
       setMeterEquipments(newMeterEquipments);
     }
   }, [screenSize]);
 
-  useEffect(() => {
-    setMeterEquipments(data || []);
-  }, [data]);
-
-  const onRemoveData = (id: number) => {
+  const onRemoveData = (id: number | string) => {
     console.log("Remove equipment with id:", id);
   };
 
-  const handleUpdateData = (data: MeterEquipment[]) => {
-    setMeterEquipments(data);
-    updateData?.(data);
-  };
+  const handleUpdateData = (items: MeterEquipment[]) => {
+    setMeterEquipments(items);
+    
+    
+    const convertedItems = items.map(item => ({
+      item_id: item.equipment_id || "",
+      item_size: typeof item.size === 'string' ? parseFloat(item.size) || 0 : item.size || 0,
+      quantity: item.quantity,
+      price: item.price || 0
+    }));
 
-  // ฟังก์ชันสำหรับเพิ่มอุปกรณ์จาก modal
-  const handleAddEquipment = (equipment: MaterialEquipmentObj) => {
-    const newMeterEquipment: MeterEquipment = {
-      id: Date.now(),
-      equipment_name: equipment.name || "อุปกรณ์ไฟฟ้าใหม่",
-      size: equipment.size || "1",
-      quantity:
-        typeof equipment.quantity === "string"
-          ? parseInt(equipment.quantity) || 1
-          : equipment.quantity || 1,
-      isUpdate: false,
-      isEdited: false,
+    let newData = data;
+    newData = {
+      ...newData,
+      requestServiceDetail: {
+        ...newData.requestServiceDetail as RequestServiceDetail,
+        items: convertedItems
+      }
     };
-
-    const updatedMeterEquipments = [...meterEquipments, newMeterEquipment];
-    setMeterEquipments(updatedMeterEquipments);
-    updateData?.(updatedMeterEquipments);
+    
+    updateData?.(newData);
   };
 
   const getFilteredColumns = () => {
@@ -124,7 +140,7 @@ const MeterEquipmentList = ({
           realData={meterEquipments}
           LabelAddRow={
             showAddButton && !isReadOnly && screenSize === "desktop"
-              ? "เพิ่มประเภทอุปกรณ์ไฟฟ้า"
+              ? "เพิ่มมิเตอร์/อุปกรณ์ไฟฟ้า"
               : undefined
           }
           onRemoveData={onRemoveData}
@@ -144,24 +160,24 @@ const MeterEquipmentList = ({
                 page={page}
                 pageSize={pageSize}
                 onUpdateData={handleUpdateData}
-                equipmentNameOptions={equipmentNameOptions}
+                meterEquipmentOptions={meterEquipmentOptions}
                 onRemoveData={onRemoveData}
                 setUpdateIndex={(index) => {
                   setUpdateIndex(index);
                   setOpenModal(true);
                 }}
-                showActionButtons={showActionColumn && !isReadOnly} // เพิ่ม !isReadOnly
+                showActionButtons={showActionColumn && !isReadOnly}
                 isReadOnly={isReadOnly}
+                requestCode={requestCode}
               />
 
-              {/* แสดง Add Button เฉพาะเมื่อ showAddButton เป็น true และไม่ใช่ readOnly */}
               {showAddButton && !isReadOnly && (
                 <Button
                   className="pea-button-outline my-2 w-full"
                   onClick={() => setOpenModal(true)}
                 >
                   <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                  เพิ่มวัสดุอุปกรณ์
+                  เพิ่มมิเตอร์/อุปกรณ์ไฟฟ้า
                 </Button>
               )}
             </div>
@@ -186,7 +202,11 @@ const MeterEquipmentList = ({
           open={openModal}
           onClose={() => setOpenModal(false)}
           index={updateIndex}
-          onAddEquipment={handleAddEquipment}
+          options={meterEquipmentOptions}
+          onUpdateOptions={onUpdateOptions}
+          data={meterEquipments}
+          onUpdateData={handleUpdateData}
+          requestCode={requestCode}
         />
       )}
     </>

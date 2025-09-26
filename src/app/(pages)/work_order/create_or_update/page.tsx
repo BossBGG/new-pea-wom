@@ -89,6 +89,7 @@ import {renderWorkOrderBreadcrumbTitle} from "@/app/(pages)/work_order/breadcrum
 import {faFile} from "@fortawesome/free-solid-svg-icons";
 import {ExecuteWorkOrder} from "@/app/(pages)/work_order/execute/ExecuteWorkOrder";
 import {IconDefinition} from "@fortawesome/fontawesome-svg-core";
+import { getMeterEquipmentOptions } from "@/app/api/MaterialEquipmentApi";
 
 const CreateOrUpdateWorkOrder = () => {
   const {setBreadcrumb} = useBreadcrumb();
@@ -130,6 +131,7 @@ const CreateOrUpdateWorkOrder = () => {
     MaterialEquipmentObj[]
   >([]);
   const [workOrderStep, setWorkOrderStep] = useState<Array<StepWorkOrderObj>>(stepsWorkOrder);
+  const [meterEquipmentOptions, setMeterEquipmentOptions] = useState<Options[]>([]);
 
   console.log('customerRequest >>>> ', customerRequest);
   useEffect(() => {
@@ -151,6 +153,19 @@ const CreateOrUpdateWorkOrder = () => {
 
     if (['s301', 's312'].includes(requestCode)) {
       requests.resServiceEquipmentOptions = handleSearchServiceEquipmentType("", requestCode)
+    }
+
+    if (requestCode === 's318') {
+    requests.resMeterEquipmentOptions = getMeterEquipmentOptions("", requestCode).then(response => {
+      if (response.status === 200 && response.data.data) {
+        return response.data.data.map(equipment => ({
+          label: equipment.option_title,
+          value: equipment.id,
+          data: equipment
+        }));
+      }
+      return [];
+    });
     }
 
     if (["s312", "s315", "s318", "s302", "s303", "s304", "s306", "s307",
@@ -194,7 +209,7 @@ const CreateOrUpdateWorkOrder = () => {
           resBusinessType, resVoltages, resRenewableSource,
           resRenewableType, resWorkerOptions, resTransformerBrands,
           resTransformerPhase, resTransformerType, resTransformerSize,
-          resReqService, resServiceTypes
+          resReqService, resServiceTypes, resMeterEquipmentOptions
         } = resolvedData;
 
         setEventOptions(respEventOptions || [])
@@ -211,6 +226,7 @@ const CreateOrUpdateWorkOrder = () => {
         setTransformerSizeOptions(resTransformerSize || [])
         setRequestServiceOptions(resReqService || [])
         setServiceTypesOptions(resServiceTypes || [])
+        setMeterEquipmentOptions(resMeterEquipmentOptions || [])
 
         if (Boolean(isEdit) || Boolean(isView) || Boolean(isExecute)) {
           getWorkOrderDetailById(id).then(async (res) => {
@@ -614,8 +630,11 @@ const CreateOrUpdateWorkOrder = () => {
             {renderBusinessType()}
 
             <MeterEquipmentList
-              data={data.meterequipment}
-              updateData={updateMeterEquipment}
+              data={data || {} as WorkOrderObj}
+              updateData={setData}
+              meterEquipmentOptions={meterEquipmentOptions}
+              onUpdateOptions={setMeterEquipmentOptions}
+              requestCode={requestCode}
             />
           </div>
         );

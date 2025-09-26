@@ -1,4 +1,4 @@
-import {Assignee, Options, RequestServiceItem, Transformer} from "@/types";
+import {Assignee, MeterEquipment, Options, RequestServiceItem, Transformer} from "@/types";
 import handleSearchServiceEquipmentType from "@/app/helpers/SearchServiceEquipmentType";
 import handleSearchEvent from "@/app/helpers/SearchEvent";
 import handleSearchMainWorkCenter from "@/app/helpers/SearchMainWorkCenter";
@@ -7,6 +7,7 @@ import {
   handleSearchTransformerPhase, handleSearchTransformerSize,
   handleSearchTransformerType, handleSearchTransformerVoltage
 } from "@/app/helpers/SearchTransformer.";
+import { getMeterEquipmentOptions } from "@/app/api/MaterialEquipmentApi";
 
 export const mapRequestServiceOptions =async (
   reqServiceData: RequestServiceItem[],
@@ -167,3 +168,36 @@ export const mapTransformerVoltageOptions = async (
 
   return newOptions
 }
+
+export const mapMeterEquipmentOptions = async (
+  meterEquipments: MeterEquipment[],
+  meterEquipmentOptions: Options[],
+  requestCode: string
+): Promise<Options[]> => {
+  let newOptions = [...meterEquipmentOptions];
+
+  await Promise.all(
+    meterEquipments.map(async (equipment: MeterEquipment) => {
+      const inOption = meterEquipmentOptions.find(
+        (opt) => opt.value === equipment.equipment_id
+      );
+      if (!inOption && equipment.equipment_id) {
+        try {
+          const response = await getMeterEquipmentOptions(equipment.equipment_id, requestCode);
+          if (response.status === 200 && response.data.data) {
+            const options: Options[] = response.data.data.map((item) => ({
+              label: item.option_title,
+              value: item.id,
+              data: item,
+            }));
+            newOptions = [...newOptions, ...options];
+          }
+        } catch (error) {
+          console.error("Error loading meter equipment options:", error);
+        }
+      }
+    })
+  );
+
+  return newOptions;
+};

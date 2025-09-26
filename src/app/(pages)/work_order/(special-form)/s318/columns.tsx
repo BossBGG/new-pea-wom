@@ -1,16 +1,18 @@
+//s318
 import { ColumnDef, Table } from "@tanstack/react-table";
 import { EditableSelectCell } from "@/app/components/editor-table/EditableSelectCell";
 import { EditableTextCell } from "@/app/components/editor-table/EditableTextCell";
-import { MeterEquipment } from "@/types";
+import { MeterEquipment, Options } from "@/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheckCircle,
   faPencil,
   faTrashCan,
 } from "@fortawesome/free-solid-svg-icons";
+import { getMeterEquipmentOptions } from "@/app/api/MaterialEquipmentApi";
 
 interface TableMeta {
-  handleRemoveRow?: (index: number, id: number) => void;
+  handleRemoveRow?: (index: number, id: number | string) => void;
   handleEditRow?: (index: number, isUpdate: boolean, isEdited: boolean, table: unknown) => void;
   updateData: (rowIndex: number, columnId: string, value: unknown) => void;
 }
@@ -27,26 +29,28 @@ interface CustomTable {
   };
 }
 
-const equipmentNameOptions = [
-  {
-    label: "มิเตอร์",
-    value: "มิเตอร์",
-  },
-  {
-    label: "อุปกรณ์ครอบสายไฟฟ้า",
-    value: "อุปกรณ์ครอบสายไฟฟ้า",
-  },
-  {
-    label: "หม้อแปลงไฟฟ้า",
-    value: "หม้อแปลงไฟฟ้า",
-  },
-  
-];
+
+const searchMeterEquipmentOptions = async (search: string): Promise<Options[]> => {
+  try {
+    const response = await getMeterEquipmentOptions(search, "s318");
+    if (response.status === 200 && response.data.data) {
+      return response.data.data.map((equipment) => ({
+        label: equipment.option_title,
+        value: equipment.id,
+        data: equipment,
+      }));
+    }
+  } catch (error) {
+    console.error("Error searching meter equipment:", error);
+  }
+  return [];
+};
 
 const asTypedTable = (table: Table<MeterEquipment>): TypedTable => 
     table as TypedTable;
-const deleteData = (index: number, id: number, table: CustomTable) => {
-  table.options.meta?.handleRemoveRow?.(index, id);
+    
+const deleteData = (index: number, id: number | string, table: CustomTable) => {
+  table.options.meta?.handleRemoveRow?.(index, id); 
 };
 
 const updateData = (
@@ -71,19 +75,35 @@ const baseColumns: ColumnDef<MeterEquipment>[] = [
     accessorKey: "equipment_name",
     header: "มิเตอร์/อุปกรณ์ไฟฟ้า",
     cell: ({ row, table }) => {
+      console.log("[Table Render] row.original:", row.original);
       if (row.original.isUpdate) {
+        console.log("[Table Render] Render EditableSelectCell for row:", row.index);
         return (
           <EditableSelectCell
-            columnValue={row.getValue('equipment_name') || ''}
+            columnValue={row.original.equipment_id || ''}
             row={row}
-            column={{ id: 'equipment_name' }}
+            column={{ id: 'equipment_id' }}
             table={asTypedTable(table)}
-            options={equipmentNameOptions}
+            options={[]} 
             placeholder={'เลือกมิเตอร์/อุปกรณ์ไฟฟ้า'}
+            onSearch={searchMeterEquipmentOptions}
+            onUpdate={(value, item) => {
+              console.log("[EditableSelectCell] onUpdate called:", value, item);
+              if (item?.data) {
+                const typedTable = asTypedTable(table);
+                const meta = typedTable.options.meta;
+                if (meta && meta.updateData) {
+                  meta.updateData(row.index, "equipment_id", value);
+                  meta.updateData(row.index, "equipment_name", item.data.option_title);
+                }
+              }
+            }}
           />
         );
       } else {
-        return row.getValue('equipment_name') || '';
+        console.log("[Table Render] Render static text:", row.original.equipment_name);
+        return row.original.equipment_name || '';
+        
       }
     },
   },
@@ -98,6 +118,8 @@ const baseColumns: ColumnDef<MeterEquipment>[] = [
             column={{ id: 'size' }}
             table={asTypedTable(table)}
             columnValue={row.getValue('size') || ''}
+            numberOnly={false} 
+            placeholder="ขนาด"
           />
         );
       } else {
@@ -148,7 +170,7 @@ const baseColumns: ColumnDef<MeterEquipment>[] = [
 
 const actionColumn: ColumnDef<MeterEquipment> = {
   id: "action",
-  accessorKey: "action",
+  accessorKey: "action", 
   header: "",
   enableSorting: false,
   cell: ({row, table}) => {
@@ -172,7 +194,7 @@ const actionColumn: ColumnDef<MeterEquipment> = {
 
       <button
         className="bg-[#FFD4D4] rounded-[8px] p-2 flex items-center justify-center cursor-pointer"
-        onClick={() => deleteData(row.index, row.original.id || 0, asTypedTable(table))}>
+        onClick={() => deleteData(row.index, row.original.id, asTypedTable(table))}>
         <FontAwesomeIcon icon={faTrashCan} size={"sm"} color="#E02424"/>
       </button>
     </div>

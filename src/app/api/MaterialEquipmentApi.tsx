@@ -1,6 +1,6 @@
 import { createTableListApi, TableListApi } from "@/app/api/TableApiHelper";
 import api, { ApiResponse } from "@/app/api/Api";
-import { MaterialEquipmentObj, MaterialOptionObj } from "@/types";
+import { MaterialEquipmentObj, MaterialOptionObj, MeterEquipmentService } from "@/types";
 import {
   addMaterialType,
   updateMaterialType,
@@ -101,3 +101,14 @@ export const getMaterialMaster = (search: string = ""): Promise<ApiResponse<{
   return api.get(`/v1/material-master?search=${search}`);
 };
 
+export const getMeterEquipmentOptions = (
+  search: string = "",
+  requestCode: string = "s318"
+): Promise<ApiResponse<MeterEquipmentService[]>> => {
+  return api.get(`/v1/services/meter-equipments`, {
+    params: {
+      slug: 'equipment',
+      requestCode
+    }
+  })
+}

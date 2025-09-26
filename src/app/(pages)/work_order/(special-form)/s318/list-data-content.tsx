@@ -9,13 +9,14 @@ interface ListDataContentProps {
   realData: MeterEquipment[],
   pageData: MeterEquipment[],
   onUpdateData: (data: MeterEquipment[]) => void,
-  onRemoveData: (id: number) => void,
+  onRemoveData: (id: number | string) => void,
   setUpdateIndex: (index: number) => void,
   page: number,
   pageSize: number,
-  equipmentNameOptions: Options[],
+  meterEquipmentOptions: Options[],
   showActionButtons?: boolean;
   isReadOnly?: boolean;
+  requestCode: string;
 }
 
 const ListDataContent = ({
@@ -26,18 +27,22 @@ const ListDataContent = ({
                            setUpdateIndex,
                            page,
                            pageSize,
+                           meterEquipmentOptions,
                            showActionButtons = true,
                            isReadOnly = false,
+                           requestCode
                          }: ListDataContentProps) => {
 
   const handleUpdateData = (key: string, value: string | number | boolean | undefined, index: number) => {
+    if (isReadOnly) return;
+
     index = (page * pageSize) + index
     const newData = realData.map((item: MeterEquipment, idx) => {
       let isEdited = item.isEdited;
-      if(key === 'isUpdate' && value) {
-        isEdited = true
-        setUpdateIndex(index)
-        value = false
+      if (key === "isUpdate" && value) {
+        isEdited = true;
+        setUpdateIndex(index);
+        value = false;
       }
 
       if(key === 'isActive') {
@@ -49,11 +54,18 @@ const ListDataContent = ({
     onUpdateData(newData);
   }
 
-  const deleteData = (id: number, index: number) => {
+  const deleteData = (id: number | string, index: number) => {
+    if (isReadOnly) return;
+
     const adjustedIndex = (page * pageSize) + index; 
     const newData = realData.filter((_, idx) => adjustedIndex !== idx);
     onUpdateData(newData);
     onRemoveData(id); 
+  }
+
+  const getEquipmentName = (equipmentId: string) => {
+    const equipment = meterEquipmentOptions.find((opt) => opt.value === equipmentId);
+    return equipment ? equipment.label : equipmentId;
   }
 
   return (
@@ -62,30 +74,34 @@ const ListDataContent = ({
         pageData.length > 0
           ?
           pageData.map((item, index) => (
-            <Card key={index} className="p-3 mb-3 shadow-none bg-[#F9F6FF]">
+            <Card key={index} className="p-3 mb-3 shadow-none">
               <CardContent>
                 <div className="flex justify-between">
                   <div className="flex-1">
                     <div className="font-medium text-lg mb-2">
-                      {index + 1}. {item.equipment_name || 'มิเตอร์/อุปกรณ์ไฟฟ้า'}
+                      {index + 1}. {getEquipmentName(item.equipment_id || "")}
                     </div>
                     
                     <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex ">
+                      <div className="flex">
                         <span>ขนาด :</span>
                         <span className="font-medium ml-2">{item.size || '-'}</span>
                       </div>
                       
-                      <div className="text-sm text-gray-600">
-                    <span>จำนวนหน่วย : </span>
-                    <span className="font-medium text-sm text-black ml-2">
-                      {item.quantity || 2}
-                    </span>
-                  </div>
-                      
-                      
+                      <div className="flex">
+                        <span>จำนวนหน่วย :</span>
+                        <span className="font-medium ml-2">{item.quantity || 0}</span>
+                      </div>
+
+                      <div className="flex">
+                        <span>ราคา :</span>
+                        <span className="font-medium ml-2">
+                          {item.price ? `${Number(item.price).toLocaleString()}` : '0.00'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  
                   {showActionButtons && !isReadOnly && (
                   <div className="flex justify-end items-start md:mt-0 mt-6 space-x-2">
                     {
@@ -107,7 +123,7 @@ const ListDataContent = ({
 
                     <button
                       className="bg-[#FFD4D4] rounded-[8px] p-2 flex items-center justify-center cursor-pointer"
-                      onClick={() => deleteData(item.id || 0, index)}>
+                      onClick={() => deleteData(item.equipment_id || "", index)}>
                       <FontAwesomeIcon icon={faTrashCan} size={"sm"} color="#E02424"/>
                     </button>
                   </div>
@@ -116,10 +132,13 @@ const ListDataContent = ({
               </CardContent>
             </Card>
           ))
-          : <div className="text-center text-gray p-4">ไม่มีรายการมิเตอร์/อุปกรณ์ไฟฟ้า</div>
+          : <div className="text-center text-gray-500 p-4">ไม่มีรายการมิเตอร์/อุปกรณ์ไฟฟ้า</div>
       }
     </div>
   )
 }
 
 export default ListDataContent;
+
+
+

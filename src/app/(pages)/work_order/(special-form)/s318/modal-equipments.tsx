@@ -1,174 +1,214 @@
 import Modal from "@/app/layout/Modal";
-import {cn} from "@/lib/utils";
-import {useEffect, useState} from "react";
-import InputSelect from "@/app/components/form/InputSelect";
-import {MaterialEquipmentObj, Options} from "@/types";
-import {Label} from "@/components/ui/label";
-import {Checkbox} from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
+import { MeterEquipment, Options } from "@/types";
+import { Label } from "@/components/ui/label";
 import InputText from "@/app/components/form/InputText";
 import { Button } from "@/components/ui/button";
+import InputSelect from "@/app/components/form/InputSelect";
+import { getMeterEquipmentOptions } from "@/app/api/MaterialEquipmentApi";
 
 interface ModalEquipmentsProps {
-  open: boolean,
-  onClose: () => void,
-  index: number,
-  onAddEquipment?: (equipment: MaterialEquipmentObj) => void,
+  open: boolean;
+  onClose: () => void;
+  index: number;
+  options: Options[];
+  onUpdateOptions?: (options: Options[]) => void;
+  data: MeterEquipment[];
+  onUpdateData: (d: MeterEquipment[]) => void;
+  requestCode: string;
 }
 
 const ModalEquipments = ({
-                           open,
-                           onClose,
-                           onAddEquipment
-                         }: ModalEquipmentsProps) => {
-  const [active, setActive] = useState(0);
-  const [material, setMaterial] = useState<string | number>('');
-  const [equipmentSelected, setEquipmentSelected] = useState<number[]>([]);
-  const [materialOptions] = useState<Options[]>([
-    {value: 'ชุดตรวจสอบและบำรุงอุปกรณ์ไฟฟ้า', label: 'ชุดตรวจสอบและบำรุงอุปกรณ์ไฟฟ้า'}
-  ])
+  open,
+  onClose,
+  options,
+  onUpdateOptions,
+  data,
+  onUpdateData,
+  requestCode,
+}: ModalEquipmentsProps) => {
+  const [formData, setFormData] = useState<MeterEquipment>({
+    id: 0,
+    equipment_id: "",
+    equipment_name: "",
+    size: "",
+    quantity: 1,
+    price: 0,
+    isUpdate: true,
+    isEdited: false,
+  });
 
-  const [equipmentList] = useState<MaterialEquipmentObj[]>([
-    {name: 'มิเตอร์', size: "2" , quantity: 1, id: 1, isEdited: false} as MaterialEquipmentObj,
-    {name: 'ฉบวนครอบสายแรงสูง', size: "1" , quantity: 1, id: 2, isEdited: false} as MaterialEquipmentObj,
-    {name: 'หม้อแปลงไฟฟ้า', size: "3" , quantity: 1, id: 3, isEdited: false} as MaterialEquipmentObj,
-  ]);
+  const [equipmentOptions, setEquipmentOptions] = useState<Options[]>(options);
 
-  const classActive = 'text-[#671FAB] bg-[#F4EEFF]';
-  const classDefault = 'w-full text-center p-2 font-semibold rounded-full';
-  const tabs = ['ชุดติดตั้งอุปกรณ์', 'ค้นหาจากรหัส/ชื่อ']
-
+  
   useEffect(() => {
-    //TODO call api get equipment list
-    console.log(material);
-  }, [material]);
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const items: number[] = equipmentList.map((eq) => {
-        return eq.id
-      })
-      setEquipmentSelected(items)
-    } else {
-      setEquipmentSelected([])
+    if (open) {
+      loadEquipmentOptions();
     }
-  }
+  }, [open, requestCode]);
 
-  const handleCheck = (checked: boolean, id: number) => {
-    if (checked) {
-      setEquipmentSelected([...equipmentSelected, id])
-    } else {
-      setEquipmentSelected(equipmentSelected.filter((item) => item !== id))
+  const loadEquipmentOptions = async () => {
+    try {
+      const response = await getMeterEquipmentOptions("", requestCode);
+      if (response.status === 200 && response.data.data) {
+        const opts: Options[] = response.data.data.map((equipment) => ({
+          label: equipment.option_title,
+          value: equipment.id,
+          data: equipment,
+        }));
+        setEquipmentOptions(opts);
+        onUpdateOptions?.(opts);
+      }
+    } catch (error) {
+      console.error("Error loading equipment options:", error);
     }
-  }
+  };
+
+  const handleInputChange = (
+    field: keyof MeterEquipment,
+    value: string | number
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleEquipmentSelect = (value: string | number) => {
+    const selectedEquipment = equipmentOptions.find(opt => opt.value === value);
+    if (selectedEquipment) {
+      setFormData((prev) => ({
+        ...prev,
+        equipment_id: value as string,
+        equipment_name: selectedEquipment.label,
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    if (!formData.equipment_name || !formData.equipment_id) {
+      alert("กรุณาเลือกมิเตอร์/อุปกรณ์ไฟฟ้า");
+      return false;
+    }
+    if (!formData.size) {
+      alert("กรุณากรอกขนาด");
+      return false;
+    }
+    if (!formData.quantity || Number(formData.quantity) <= 0) {
+      alert("กรุณากรอกจำนวนที่ถูกต้อง");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = () => {
-    const selectedEquipments = equipmentList.filter((equipment) =>
-      equipmentSelected.includes(equipment.id)
-    );
+    if (!validateForm()) return;
 
-    selectedEquipments.forEach((equipment) => {
-      onAddEquipment?.(equipment);
-    });
+    const newEquipment: MeterEquipment = {
+      ...formData,
+      id: Date.now(), 
+      quantity: Number(formData.quantity),
+      price: Number(formData.price) || 0,
+      isUpdate: false,
+      isEdited: false,
+    };
 
-    // Reset selections
-    setEquipmentSelected([]);
-    setMaterial("");
-    onClose();
-  }
+    console.log("[ModalEquipments] newEquipment", newEquipment);
+
+    const updatedData = [...data, newEquipment];
+    onUpdateData(updatedData);
+    
+    setTimeout(() => handleCancel(), 0); 
+  };
 
   const handleCancel = () => {
-    setEquipmentSelected([]);
-    setMaterial("");
+    setFormData({
+      id: 0,
+      equipment_id: "",
+      equipment_name: "",
+      size: "",
+      quantity: 1,
+      price: 0,
+      isUpdate: false,
+      isEdited: false,
+    });
     onClose();
-  }
+  };
 
   return (
-    <Modal title="เพิ่มวัสดุอุปกรณ์"
-           footer={<div className="w-full flex flex-wrap justify-between items-center">
-                         <div className=" p-2 w-1/2">
-                         <Button
-                         className="text-[#671FAB] w-full bg-white border-1 border-[#671FAB] rounded-full font-semibold md:text-start text-center cursor-pointer hover:bg-white"
-                         onClick={handleCancel}
-                         >
-                           ยกเลิก
-                         </Button>
-                         </div>
-                          <div className=" p-2 w-1/2">
-                          <Button className="pea-button w-full" onClick={handleSubmit}>
-                           บันทึก
-                          </Button>
-                         </div>
-                      </div>}
-           open={open} onClose={onClose}>
-      <div className="flex items-center p-1 bg-[#F8F8F8] rounded-full">
-        {
-          tabs.map((tab, index) => (
-            <div className={cn(classDefault, active === index && classActive)}
-                 onClick={() => {
-                   setActive(index)
-                 }}
-                 key={index}
+    <Modal
+      title="เพิ่มมิเตอร์/อุปกรณ์ไฟฟ้า"
+      footer={
+        <div className="w-full flex flex-wrap justify-between items-center">
+          <div className="p-2 w-1/2">
+            <Button
+              className="text-[#671FAB] w-full bg-white border-1 border-[#671FAB] rounded-full font-semibold md:text-start text-center cursor-pointer hover:bg-white"
+              onClick={handleCancel}
             >
-              {tab}
-            </div>
-          ))
-        }
-      </div>
-
-      <InputSelect options={materialOptions}
-                   value={material as string}
-                   placeholder={active === 0 ? 'ค้นหาชุดติดตั้งอุปกรณ์' : 'ค้นหารหัสวัสดุหรือชื่อวัสดุ'}
-                   label={active === 0 ? 'ค้นหาชุดติดตั้งอุปกรณ์' : 'ค้นหารหัสวัสดุหรือชื่อวัสดุ'}
-                   setData={setMaterial}
-      />
-
-
-      <hr className="my-3"/>
-
-      <div className="mb-3">รายการวัสดุ ({equipmentList.length || 0})</div>
-
-      <div className="flex items-center gap-3">
-        <Checkbox id="all"
-                  className="border-[#9538EA] data-[state=checked]:border-none data-[state=checked]:bg-[#9538EA]"
-                  onCheckedChange={handleSelectAll}
-        />
-        <Label htmlFor="all">เลือกทั้งหมด</Label>
-      </div>
-
-      {
-        equipmentList.map((item, index) => (
-          <div className="flex items-center p-3 bg-[#FAF5FF] rounded-[12px] border-1 gap-3"
-               key={index}
-          >
-            <Checkbox id={`equipment_${index}`}
-                      className="border-[#9538EA] data-[state=checked]:border-none data-[state=checked]:bg-[#9538EA]"
-                      checked={equipmentSelected.includes(item.id)}
-                      onCheckedChange={(checked: boolean) => handleCheck(checked, item.id)}
-            />
-            <Label htmlFor={`equipment_${index}`} className="flex flex-col items-start w-full">
-               <div className="font-medium text-base ">
-                {index + 1}. {item.name}
-              </div>
-              <div className="flex flex-col gap-2 text-sm text-gray-600 w-full mb-3">
-                <div className="flex justify-between">
-                  <span>ขนาด:</span>
-                  <span className="font-medium">{item.size}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center w-full">
-                <div className="text-[14px] text-[#4A4A4A]">จำนวน :</div>
-                <div className="w-[15%]">
-                  <InputText value={item.quantity}
-                             align="center"
-                  />
-                </div>
-              </div>
-            </Label>
+              ยกเลิก
+            </Button>
           </div>
-        ))
+          <div className="p-2 w-1/2">
+            <Button className="pea-button w-full" onClick={handleSubmit}>
+              บันทึก
+            </Button>
+          </div>
+        </div>
       }
+      open={open}
+      onClose={onClose}
+    >
+      <div className="space-y-4">
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            มิเตอร์/อุปกรณ์ไฟฟ้า
+          </Label>
+          <InputSelect
+            options={equipmentOptions}
+            value={formData.equipment_id ?? ""}
+            placeholder="เลือกมิเตอร์/อุปกรณ์ไฟฟ้า"
+            setData={handleEquipmentSelect}
+          />
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            ขนาด
+          </Label>
+          <InputText
+            value={formData.size || ""}
+            placeholder="ระบุขนาดอุปกรณ์"
+            onChange={(value) => handleInputChange("size", value)}
+          />
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            จำนวน
+          </Label>
+          <InputText
+            value={formData.quantity?.toString() || "1"}
+            placeholder="ระบุจำนวน"
+            numberOnly={true}
+            onChange={(value) => handleInputChange("quantity", parseInt(value) || 1)}
+          />
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            ราคา
+          </Label>
+          <InputText
+            value={formData.price?.toString() || "0"}
+            placeholder="ระบุราคา"
+            numberOnly={true}
+            onChange={(value) => handleInputChange("price", parseFloat(value) || 0)}
+          />
+        </div>
+      </div>
     </Modal>
-  )
-}
+  );
+};
 
 export default ModalEquipments;
+

@@ -112,6 +112,23 @@ export interface MaterialMaster {
   updatedAt: string;
 }
 
+export interface MeterEquipmentService {
+  id: string;
+  services_id: string;
+  item_slug: string;
+  item_name: string;
+  item_description: string | null;
+  option_title: string;
+  sub_id: string | null;
+  order: number;
+  is_other: boolean;
+  is_active: boolean;
+  is_del: boolean;
+  created_date: string;
+  created_by: string;
+  updated_date: string | null;
+  updated_by: string | null;
+}
 
 export interface TransformerMaterialEquipmentObj {
   code: string;
@@ -288,10 +305,18 @@ export type Insulator = {
   isEdited?: boolean;
 };
 
+interface MeterEquipmentServiceItem {
+  item_id: string;
+  item_size: number;
+  quantity: number;
+  price: number;
+}
+
 export type MeterEquipment = {
-  id: number;
+  id: number | string; 
+  equipment_id?: string;
   equipment_name: string;
-  size: string;
+  size: string | number;
   quantity: number;
   price?: number;
   isUpdate?: boolean;
@@ -425,7 +450,7 @@ export interface RequestServiceDetail extends InverterData, SiteSurveyAirConditi
   transformer_voltage?: string,
   request_type?: string,
   service_type?: string,
-  items: RequestServiceItem[] | Transformer[] | Insulator[],
+  items: RequestServiceItem[] | Transformer[] | Insulator[] | MeterEquipmentServiceItem[],
   renewable_source_id: string,
   renewable_type_id: string,
   source_other: string,
@@ -500,6 +525,7 @@ export type ResolvedData = {
   resTransformerSize?: Options[];
   resReqService?: Options[];
   resServiceTypes?: Options[];
+  resMeterEquipmentOptions?: Options[];
 };
 
 export interface ElectricGeneratorObj {

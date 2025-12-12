@@ -1,0 +1,36 @@
+import React from "react"
+import CardCollapse from "@/app/(pages)/work_order/(special-form)/component/CardCollapse";
+import InputTextArea from "@/app/components/form/InputTextArea";
+import {Survey} from "@/types";
+
+type SurveyCommentProps = {
+  data: Survey
+  updateData: (e: any) => void
+}
+
+const SurveyComment: React.FC<SurveyCommentProps> = ({
+  data,
+  updateData
+                                                     }) => {
+  const [note, setNote] = React.useState<string>(data.surveyData?.result_note || "")
+
+  const handleChange = (val: string) => {
+    setNote(val)
+    updateData({
+      ...data,
+      surveyData: {
+        ...data.surveyData,
+        result_note: val
+      }
+    })
+  }
+  return (
+    <CardCollapse title={"หมายเหตุเพิ่มเติม"}>
+      <InputTextArea data={note}
+                     label={"หมายเหตุเพิ่มเติม"}
+                     onChange={handleChange}/>
+    </CardCollapse>
+  )
+}
+
+export default SurveyComment
